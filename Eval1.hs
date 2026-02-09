@@ -30,6 +30,12 @@ eval p = evalComm p initState
 -- Completar definicion
 evalComm :: Comm -> State -> State
 evalComm Skip s = s
+--SWAP
+evalComm (Swap x y) s = let vx = lookfor x s
+                            vy = lookfor y s
+                            s' = update x vy s
+                        in update y vx s'
+
 evalComm (Let var expInt) s = let n = evalIntExp expInt s
                                   in evalComm Skip (update var n s)
 evalComm (Seq Skip c1) s = evalComm c1 s
@@ -86,3 +92,5 @@ evalBoolExp (Or exp1 exp2) estado = let valor1 = evalBoolExp exp1 estado
                                         valor2 = evalBoolExp exp2 estado
                                         in valor1 || valor2
 evalBoolExp (Not exp1) estado = not (evalBoolExp exp1 estado)
+
+

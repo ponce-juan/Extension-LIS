@@ -1,0 +1,5 @@
+v1 := "Hola";
+v2 := 3;
+
+swap v1 v2;
+skip

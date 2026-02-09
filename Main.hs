@@ -5,7 +5,8 @@ import Parser (parseComm)
 
 -- Modificar este import para usar diferentes evaluadores
 --import Eval1 --Por defecto
-import EvalObj -- Para evaluar objetos
+-- import EvalObj -- Para evaluar objetos
+import EvalMain -- Evaluador general
 ---------------------------------------------------------
 
 main :: IO ()

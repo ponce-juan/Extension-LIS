@@ -3,6 +3,12 @@ module AST where
 -- Identificadores de Variable
 type Variable = String
 
+-- Expresiones Generales
+data Exp = EInt IntExp
+        | EBool BoolExp
+        | EObj ObjExp
+ deriving (Show, Eq)        
+
 -- Expresiones Aritmeticas
 data IntExp = Const Integer
             | Var Variable
@@ -13,10 +19,10 @@ data IntExp = Const Integer
             | Div IntExp IntExp
             | Question BoolExp IntExp IntExp -- a > 0 ? 1 : 2;
             -- Extensión para objetos
-            | Obj [(String, IntExp)] -- {edad: 20}
-            | Str String -- "Juan"
-            | Access IntExp String  -- para implementar persona.edad
-            | BoolConst Bool -- admito booleanos para el parser de intexp
+            -- | Obj [(String, IntExp)] -- {edad: 20}
+            -- | Str String -- "Juan"
+            -- | Access IntExp String  -- para implementar persona.edad
+            -- | BoolConst Bool -- admito booleanos para el parser de intexp
  deriving (Show,Eq)
 
 -- Expresiones Booleanas
@@ -30,10 +36,16 @@ data BoolExp = BTrue
              | Not BoolExp
  deriving (Show,Eq)
 
+-- Expresiones de Objetos
+data ObjExp = Obj [(String, Exp)] -- {edad: 20}
+            | Str String -- "Juan"
+            | Access Exp String  -- para implementar persona.edad
+ deriving (Show,Eq)
+
 -- Comandos (sentencias)
 -- Observar que solo se permiten variables de un tipo (entero)
 data Comm = Skip
-          | Let Variable IntExp
+          | Let Variable Exp
           | Seq Comm Comm
           | Cond BoolExp Comm Comm
           | Repeat Comm BoolExp

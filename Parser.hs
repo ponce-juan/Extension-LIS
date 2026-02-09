@@ -29,7 +29,7 @@ lis = makeTokenParser (emptyDef   { commentStart  = "/*"
                                                        , ">"
                                                        , "&"
                                                        , "|"
-                                                       , "=="
+                                                       , "="
                                                        , ";"
                                                        , "~"
                                                        , ":="
@@ -41,6 +41,17 @@ lis = makeTokenParser (emptyDef   { commentStart  = "/*"
                                                        ]
                                    }
                                  )
+-- Parser para expresiones generales
+generalExp :: Parser Exp
+generalExp = try (do o <- objAccess
+                     return (EObj o))
+        <|> try (do s <- stringLiteral lis
+                    return (EObj (Str s)))
+        <|> try (do i <- intexp
+                    return (EInt i))
+        <|> try (do b <- boolexp
+                    return (EBool b))
+
 ----------------------------------
 --- Parser de expressiones enteras
 -----------------------------------
@@ -55,24 +66,25 @@ t := t + t | m
 term = chainl factor (do {symbol "+"; return (+)})
 factor = integer <|> parens term
 --}
+
 intexp :: Parser IntExp
 intexp  = chainl1 term addopp
 
 --Modifico term para implementar el azucar sintactica
-term = chainl1 factor' multopp
+term = chainl1 factor multopp
 --term = chainl1 factor multopp
 
 factor = try (parens lis intexp)
          <|> try (do reservedOp lis "-"
                      f <- factor
                      return (UMinus f))
-         <|> try (objExp) --Parseo el objeto completo
-         <|> try (do s <- stringLiteral lis  
-                     return (Str s))  --Parseo el string literal ej "hola" al tipo Str "hola" utilizando stringLiteral de la libreria Parsec.Token
-         <|> try (do reserved lis "true" 
-                     return (BoolConst True)) --Parseo valor boolean del Obj
-         <|> try (do reserved lis "false"
-                     return (BoolConst False)) --Parseo valor boolean del Obj
+        --  <|> try (objExp) --Parseo el objeto completo
+        --  <|> try (do s <- stringLiteral lis  
+        --              return (Str s))  --Parseo el string literal ej "hola" al tipo Str "hola" utilizando stringLiteral de la libreria Parsec.Token
+        --  <|> try (do reserved lis "true" 
+        --              return (EBool True)) --Parseo valor boolean del Obj
+        --  <|> try (do reserved lis "false"
+        --              return (BoolConst False)) --Parseo valor boolean del Obj
          <|> (do n <- integer lis
                  return (Const n)
                 <|> do  str <- identifier lis
@@ -111,7 +123,7 @@ intcomp = try (do i <- intexp
                   j <- intexp
                   return (c i j))
 
-compopp = try (do reservedOp lis "=="
+compopp = try (do reservedOp lis "="
                   return Eq)
           <|> try (do reservedOp lis "<"
                       return Lt)
@@ -152,7 +164,8 @@ comm2 = try (do reserved lis "swap"
                     return (Repeat c cond))
         <|> try (do str <- identifier lis
                     reservedOp lis ":="
-                    e <- intexp
+                    -- e <- intexp
+                    e <- generalExp
                     return (Let str e))
 
 
@@ -180,27 +193,31 @@ sepBy parser separador -> parsea 0 o mas ocurrencias de *parser*, separadas por 
 -- Parser de un campo del objeto  
 -- retorna (String, IntExp) -> String == nombre del campo, IntExp == valor del campo
 -- (Ej. edad = 10) obtiene los datos edad, =, 10 y los parsea name <- edad, value<-10, retorna (edad,10)
-objField :: Parser (String, IntExp)
+-- objField :: Parser (String, IntExp)
+objField :: Parser (String, Exp)
 objField = do
                 name <- identifier lis
-                reservedOp lis "="
-                value <- intexp
+                reservedOp lis ":"
+                value <- generalExp
+                -- value <- intexp
                 return (name, value)
 
 -- Parser para lista de campos
 -- Retorna una lista de par campo, valor; separadas por el caracter ","
 -- (Ej. [nombre="pepe",edad=15] -> [(nombre,"pepe"), (edad,15)])
-objFields :: Parser [(String,IntExp)]
+objFields :: Parser [(String,Exp)]
+-- objFields :: Parser [(String,IntExp)]
 objFields = sepBy objField (reservedOp lis ",")
 
 -- Parser de objeto completo
 -- Extraigo {, luego obtengo la lista de campos, extraigo } y al final retorno la lista de campos del objeto
-objExp :: Parser IntExp
+-- objExp :: Parser IntExp
+objExp :: Parser ObjExp
 objExp = do
-        reservedOp lis "{"
-        fields <- objFields
-        reservedOp lis "}"
-        return (Obj fields)
+            reservedOp lis "{"
+            fields <- objFields
+            reservedOp lis "}"
+            return (Obj fields)
 
 
 -----------------------------------
@@ -239,11 +256,21 @@ foldl Access (Var "persona") ["dir","calle"]
 -- many :: Parser a -> Parser [a]
 -- many p aplica el parser p, cero o mas veces. Retorna una lista de los resultados del parser p
 
-factor' :: Parser IntExp
-factor' = do
-        obj <- factor
-        fields <- many fieldAccess
-        return (buildAccess obj fields)
+-- factor' :: Parser IntExp
+-- factor' :: Parser IntExp
+-- factor' = do
+--         obj <- factor
+--         fields <- many fieldAccess
+--         return (buildAccess obj fields)
+
+objAccess :: Parser ObjExp
+objAccess = do 
+                base <- try (do obj <- objExp
+                                return (EObj obj))
+                     <|> do v <- identifier lis
+                            return (EInt (Var v))
+                fields <- many fieldAccess
+                return (buildAccess base fields)
 
 --aux para factor sin foldl
 -- Ej. persona.dir.calle
@@ -260,10 +287,17 @@ resultado
 -> Access (Access (Var "persona") "dir") "calle"
 
 -}
-buildAccess :: IntExp -> [String] -> IntExp
-buildAccess exp [] = exp
-buildAccess exp (f:fs) = buildAccess (Access exp f) fs
+-- buildAccess :: IntExp -> [String] -> IntExp
+buildAccess :: Exp -> [String] -> ObjExp
+buildAccess exp [] = case exp of
+                    EObj o -> o
+                    _      -> error "Acceso invalido"
+-- buildAccess exp [] = exp
+buildAccess exp (f:fs) = buildAccess' (Access exp f) fs
 
+buildAccess' :: ObjExp -> [String] -> ObjExp
+buildAccess' obj [] = obj
+buildAccess' obj (f:fs) = buildAccess' (Access (EObj obj) f) fs
 
 
 

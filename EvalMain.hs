@@ -1,9 +1,9 @@
-module EvalObj (eval) where
+module EvalMain (eval) where
 
 import AST
 
 -- Defino nuevo tipo de dato Value (Enteros, Booleanos, String y Objetos)
-data Value = VInt Integer
+data Value =  VInt Integer
             | VBool Bool
             | VStr String
             | VObj [(String, Value)]
@@ -20,12 +20,10 @@ initState = []
 lookfor :: Variable -> State -> Value
 lookfor var ((x,y):xs)= if var == x then y
                                     else lookfor var xs
---Caso base
 lookfor var [] = error ("Variable: " ++ var ++ " no definida en el estado")
 
 -- Busco un campo en el objeto
 findField :: String -> [(String, Value)] -> Value
---caso base
 findField campo [] = error("Campo inexistente: " ++ campo)
 
 findField campo ((nombre,val):xs) = if campo == nombre
@@ -47,23 +45,32 @@ update var val [] = [(var, val)]
 update var val ((x,y):xs) = if var == x then (var,val):xs
                                         else (x,y): update var val xs
 
+-----------------------------------------
+--Evaluador generico para cada tipo de expresion
+-----------------------------------------
+evalExp :: Exp -> State -> Value
+evalExp (EInt i) s = evalIntExp i s
+evalExp (EBool b) s = VBool (evalBoolExp b s)
+evalExp (EObj o) s = evalObjExp o s
+
 -- Evalua un programa en el estado nulo
 eval :: Comm -> State
 eval p = evalComm p initState
 
+-----------------------------------------
 -- Evalua un comando en un estado dado
 -- Completar definicion
+-----------------------------------------
 evalComm :: Comm -> State -> State
 evalComm Skip s = s
 
--- Comando Swap entre 2 variables, copiando el estado
+-- Comando Swap entre 2 variables, copiando el estado y retornando uno nuevo
 -- Swap a b
 -- Obtengo el valor de a
 -- Obtengo el valor de b
 -- Guardo en a el valor de b (creo nuevo estado)
 -- Guardo en b el valor de a (usando el estado anterior)
 -- retorno nuevo estado con las variables cambiadas
-
 evalComm (Swap a b) s = let va = lookfor a s
                             vb = lookfor b s
                         in if sameType va vb
@@ -72,11 +79,10 @@ evalComm (Swap a b) s = let va = lookfor a s
                                  in s''
                             else error "Swap invalido: tipos de datos distintos"
 
-
 -- Declaramos un valor en el estado
-evalComm (Let var exp) s = let val = evalIntExp exp s 
+-- evalComm (Let var exp) s = let val = evalIntExp exp s
+evalComm (Let var exp) s = let val = evalExp exp s
                            in evalComm Skip (update var val s)
-
 evalComm (Seq Skip c1) s = evalComm c1 s
 evalComm (Seq c0 c1) s = let s' = evalComm c0 s
                                   in evalComm (Seq Skip c1) s'
@@ -93,81 +99,48 @@ evalComm (Repeat c b) s = evalComm (Seq c (Cond b Skip (Repeat c b))) s
 --                                 then s'
 --                                 else evalComm (Repeat c b) s'
 
-
+-----------------------------------------
 -- Evalua una expresion entera
 -- Completar definicion
+-----------------------------------------
 evalIntExp :: IntExp -> State -> Value
-evalIntExp (Const val) estado = VInt val -- Constante entera en Value
-
-evalIntExp (Var var) estado = lookfor var estado -- Value de una variable en el estado
-
--- evalIntExp (UMinus expInt) estado = let val = evalIntExp expInt estado
---                                     in (-val) 
---Negación u opuesto de un entero con errores
-evalIntExp (UMinus exp) estado = case evalIntExp exp estado of
-                                    VInt val -> VInt(-val)
-                                    _ -> error "UMinus sobre un valor no entero"
-
-
--- evalIntExp (Plus exp1 exp2) estado = let valor1 = evalIntExp exp1 estado
---                                          valor2 = evalIntExp exp2 estado
---                                          in valor1 + valor2
--- Suma con manejo de errores
+evalIntExp (Const n) _ = VInt n
+evalIntExp (Var x) estado = lookfor x estado
+--Opuesto con mensaje de error
+evalIntExp (UMinus e) estado = case evalIntExp e estado of
+                                    VInt n -> VInt (-n)
+                                    _ -> error "UMinus sobre valor no entero"
+--Suma con mensaje de error
 evalIntExp (Plus exp1 exp2) estado = case (evalIntExp exp1 estado, evalIntExp exp2 estado) of
-                                        (VInt n1, VInt n2) -> VInt (n1+n2)
-                                        _ -> error "Operacion suma sobre valores no entero"
-
--- evalIntExp (Minus exp1 exp2) estado = let valor1 = evalIntExp exp1 estado
---                                           valor2 = evalIntExp exp2 estado
---                                           in valor1 - valor2
--- Resta con manejo de errores
+                                    (VInt n1, VInt n2) -> VInt (n1+n2)
+                                    _ -> error "Operacion suma sobre valores no entero"
+--Resta con mensaje de error
 evalIntExp (Minus exp1 exp2) estado = case (evalIntExp exp1 estado, evalIntExp exp2 estado) of
-                                        (VInt n1, VInt n2) -> VInt (n1-n2)
-                                        _ -> error "Operacion resta sobre valores no entero"
-
--- evalIntExp (Times exp1 exp2) estado = let valor1 = evalIntExp exp1 estado
---                                           valor2 = evalIntExp exp2 estado
---                                           in valor1 * valor2
---Multiplicacion con manejo de errores
+                                    (VInt n1, VInt n2) -> VInt (n1-n2)
+                                    _ -> error "Operacion resta sobre valores no entero"
+--Multiplicacion con mensaje de error
 evalIntExp (Times exp1 exp2) estado = case (evalIntExp exp1 estado, evalIntExp exp2 estado) of
                                         (VInt n1, VInt n2) -> VInt (n1*n2)
                                         _ -> error "Operacion multiplicacion sobre valores no entero"
-
--- evalIntExp (Div exp1 exp2) estado = let valor1 = evalIntExp exp1 estado
---                                         valor2 = evalIntExp exp2 estado
---                                         in div valor1 valor2
---Division con manejo de errores
+--Division con mensaje de error
 evalIntExp (Div exp1 exp2) estado = case (evalIntExp exp1 estado, evalIntExp exp2 estado) of
-                                        (VInt n1, VInt n2) -> VInt (div n1 n2)
-                                        _ -> error "Operacion division sobre valores no entero"
-
---Valor del String
---evalIntExp (Str s) estado = VStr s
-
+                                    (VInt n1, VInt n2) -> VInt (div n1 n2)
+                                    _ -> error "Operacion division sobre valores no entero"
 --Valor del operador ternario
 evalIntExp (Question b exp1 exp2) estado = if evalBoolExp b estado 
                                             then evalIntExp exp1 estado
                                             else evalIntExp exp2 estado
 
---Valor/es del objeto -> retorna lista de pares clave valor del objeto
---evalIntExp (Obj campos) estado = VObj [(nombre, evalIntExp e estado) | (nombre, e) <- campos]
-
-
---Acceso al valor del campo del objeto para azucar sintactica "."
--- evalIntExp (Access exp campo) estado = case evalIntExp exp estado of  --evaluo el objeto
---                                         VObj campos -> findField campo campos --busco el campo
---                                         _ -> error "Acceso a campo sobre un valor que no es Objeto"
-
---evalIntExp (BoolConst a) estado = VBool a
-                                            
--- Evalua una expresion entera
--- Completar definicion
+-----------------------------------------
+-- Evalua una expresion booleana
+-- Completar definicion                                            
+-----------------------------------------
 evalBoolExp :: BoolExp -> State -> Bool
 evalBoolExp BTrue estado = True
 evalBoolExp BFalse estado = False
-evalBoolExp (Eq exp1 exp2) estado = let valor1 = evalIntExp exp1 estado
-                                        valor2 = evalIntExp exp2 estado
-                                        in valor1 == valor2
+evalBoolExp (Eq exp1 exp2) estado = case (evalIntExp exp1 estado, evalIntExp exp2 estado) of
+                                        (VInt n1, VInt n2) -> n1 == n2
+                                        _ -> error "Comparacion == solo se permite en enteros"
 
 -- evalBoolExp (Lt exp1 exp2) estado = let valor1 = evalIntExp exp1 estado
 --                                         valor2 = evalIntExp exp2 estado
@@ -193,5 +166,16 @@ evalBoolExp (Or exp1 exp2) estado = let valor1 = evalBoolExp exp1 estado
                                         
 evalBoolExp (Not exp1) estado = not (evalBoolExp exp1 estado)
 
+-----------------------------------------
+-- Evalua una expresion de objeto
+-----------------------------------------
+evalObjExp :: ObjExp -> State -> Value
+evalObjExp (Str s) _ = VStr s
 
+evalObjExp (Obj campos) estado = VObj [(clave, evalExp valor estado) | (clave, valor) <- campos]
+
+--Acceso al valor del campo del objeto para azucar sintactica "."
+evalObjExp (Access exp campo) estado = case evalExp exp estado of  --evaluo el objeto
+                                        VObj campos -> findField campo campos --busco el campo
+                                        _ -> error "Acceso a campo sobre un valor que no es Objeto"
 

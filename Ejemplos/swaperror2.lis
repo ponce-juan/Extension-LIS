@@ -1,0 +1,9 @@
+p := {nombre: "Juan", adulto: true};
+v1 := true;
+v2 := p.nombre;
+
+v3 := "Pepe";
+
+swap p.nombre v3;
+
+skip

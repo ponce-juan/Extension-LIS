@@ -1,4 +1,4 @@
-auto := {marca="Ford", modelo="Focus", motor="nafta", seguridad={cinturones=true,airbag=true,abs=false}};
+auto := {marca:"Ford", modelo:"Focus", motor:"nafta", seguridad:{cinturones:true,airbag:true,abs:false}};
 
 tienecinturones := auto.seguridad.cinturones;
 tieneairbag := auto.seguridad.airbag;

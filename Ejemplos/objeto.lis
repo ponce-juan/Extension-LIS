@@ -1,2 +1,2 @@
-persona := {nombre="Carlos", edad=30};
+persona := {nombre:"Carlos", edad:30};
 x := persona.edad
