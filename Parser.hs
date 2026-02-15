@@ -207,7 +207,7 @@ objExp = do
 -----------------------------------
 --- Azucar sintactica
 -----------------------------------
--- Acceso a un solo campo
+-- fieldAccess -> acceso a un solo campo
 -- Retorna el nombre del identificador del campo
 -- (Ej. persona.edad -> retorna edad)
 fieldAccess :: Parser String
@@ -220,6 +220,12 @@ fieldAccess = do
 -- Intento consumir el objeto literal (si empieza con {}) -> Si es valido, crea el objeto, lee los campos y retorna (buildAccess (EObj obj) fields)
 -- Si falla, intento acceder al objeto desde la variable y lee el campo especificado
 -- Uso many1 para garantizar que exista al menos un "."
+{-
+- objAccess es un parser que reconoce accesos a campos de objetos usando la sintaxis punto.
+- Primero intenta parsear un acceso desde un objeto literal y luego desde una variable.
+- Se usa many1 para asegurar que exista al menos un acceso con . y evitar ambigüedad con variables simples.
+- La función buildAccess construye el AST anidando constructores Access para representar accesos encadenados como  persona.dir.calle.
+-}
 
 objAccess :: Parser ObjExp
 objAccess = try objFromLiteral <|> try objFromVar
@@ -234,10 +240,10 @@ objAccess = try objFromLiteral <|> try objFromVar
                     fields <- many1 fieldAccess
                     return (buildAccess (EInt (Var v)) fields)
 
-
-
 --Ejecucion:
 {-
+Ejemplo: persona.dir.calle
+
 buildAccess (Var "persona") ["dir","calle"]
 → buildAccess (Access (Var "persona") "dir") ["calle"]
 → buildAccess (Access (Access (Var "persona") "dir") "calle") []

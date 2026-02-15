@@ -188,6 +188,70 @@ Ejemplo 3: Swap inválido
 
     Produce error por incompatibilidad de tipos.
 
+------------------------------
+==== REGLAS DE EVALUACION ====
+------------------------------
+Dominio de valores:
+    Value = VInt Integer
+            | VBool Bool
+            | VStr String
+            | VObj [(String, Value)]
+Estado:
+    State = [(Variable, Value)]         
+
+Evaluacion de expresiones:
+    <e,σ> ⇓ v
+
+Evaluacion de comandos:
+    <c,σ> => <c', σ'>
+
+-----------------
+==== OBJETOS ====
+-----------------
+Cada campo se evalua y se construye el objeto final.
+
+                <e1​,σ> ⇓ v1​ ... <en​,σ> ⇓ vn
+    ———————————————————————————————————————————————————————
+    <{k1:e1,..., kn:en},σ> ⇓ VObj({k1 -> v1,..., kn -> vn})
+
+-------------------------
+==== ACCESO A CAMPOS ====
+-------------------------
+Acceso valido:
+      <e​,σ> ⇓ VObj(o)​     o(k)=v
+    ——————————————————————————————
+            <e.k,σ> ⇓ v
+
+Acceso invalido (error - no es un objeto):
+
+      <e​,σ> ⇓ v     v ∉ VObj
+    ———————————————————————————
+           <e.k,σ> ⇓ error
+
+Acceso invalido (error - campo inexistente):
+
+      <e​,σ> ⇓ VObj(o)     k ∉ dom(o)
+    ——————————————————————————————————
+             <e.k,σ> ⇓ error
+
+--------------
+==== SWAP ====
+--------------
+Comando: swap x y
+
+Swap valido (tipo de dato igual):
+
+    σ(x)=v1   ​σ(y)=v2   ​type(v1​)=type(v2​)
+———————————————————————————————————————————————
+  <swap x y,σ> => <skip, σ[x -> v2][y -> v1]>
+
+Swap invalido (tipo de dato distinto):
+
+    σ(x)=v1   ​σ(y)=v2   ​type(v1​)!=type(v2​)
+———————————————————————————————————————————————
+            <swap x y,σ> => error
+
+
 CONCLUSIÓN
 
 Las extensiones implementadas permiten ampliar la expresividad del lenguaje LIS.
@@ -205,3 +269,6 @@ El diseño respeta la semántica operacional original, mantiene la inmutabilidad
     * Sintaxis
     * Representación abstracta
     * Evaluación semántica
+
+
+
