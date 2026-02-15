@@ -21,7 +21,7 @@ campos ::=  identificador ':' exp
             | identificador ':' exp ',' campos
 
 Ejemplos:
-persona := {nombre: "Juan", edad: 20}
+persona := {nombre: "Juan", edad: 20};
 persona.edad
 
 ========== Sintaxis abstracta ==========

@@ -20,7 +20,7 @@ lis = makeTokenParser (emptyDef   { commentStart  = "/*"
                                   , commentLine   = "//"
                                   , reservedNames = ["true","false","skip","if",
                                                      "then","else","end",
-                                                     "while","do", "repeat", "swap"]
+                                                     "while","do", "repeat", "until", "swap"]
                                   , reservedOpNames = [  "+"
                                                        , "-"
                                                        , "*"
@@ -47,13 +47,14 @@ lis = makeTokenParser (emptyDef   { commentStart  = "/*"
 generalExp :: Parser Exp
 generalExp = try (do o <- objAccess
                      return (EObj o))
+        <|> try (do o <- objExp
+                    return (EObj o))
         <|> try (do s <- stringLiteral lis
                     return (EObj (Str s)))
         <|> try (do i <- intexp
                     return (EInt i))
         <|> try (do b <- boolexp
                     return (EBool b))
-
 ----------------------------------
 --- Parser de expressiones enteras
 -----------------------------------
@@ -80,9 +81,9 @@ factor = try (parens lis intexp)
                      f <- factor
                      return (UMinus f))
          <|> (do n <- integer lis
-                 return (Const n)
-                <|> do  str <- identifier lis
-                        return (Var str))
+                 return (Const n))
+         <|> do  str <- identifier lis
+                 return (Var str)
 
 multopp = do try (reservedOp lis "*")
              return Times
@@ -168,12 +169,6 @@ comm2 = try (do reserved lis "swap"
 parseComm :: SourceName -> String -> Either ParseError Comm
 parseComm = parse (totParser comm)
 
-------------------------------------
--- test de parseo
-------------------------------------
--- parseIntExp :: String -> Either ParseError IntExp
--- parseIntExp = parse (totParser intexp) ""
-
 -----------------------------------
 --- Parser de Objetos
 -----------------------------------
@@ -221,14 +216,25 @@ fieldAccess = do
                 identifier lis
 
 
+--objAccess para acceder a campos del objeto
+-- Intento consumir el objeto literal (si empieza con {}) -> Si es valido, crea el objeto, lee los campos y retorna (buildAccess (EObj obj) fields)
+-- Si falla, intento acceder al objeto desde la variable y lee el campo especificado
+-- Uso many1 para garantizar que exista al menos un "."
+
 objAccess :: Parser ObjExp
-objAccess = do 
-                base <- try (do obj <- objExp
-                                return (EObj obj))
-                     <|> do v <- identifier lis
-                            return (EInt (Var v))
-                fields <- many fieldAccess
-                return (buildAccess base fields)
+objAccess = try objFromLiteral <|> try objFromVar
+            where
+            objFromLiteral = do
+                    obj <- objExp
+                    fields <- many1 fieldAccess
+                    return (buildAccess (EObj obj) fields)
+
+            objFromVar = do
+                    v <- identifier lis
+                    fields <- many1 fieldAccess
+                    return (buildAccess (EInt (Var v)) fields)
+
+
 
 --Ejecucion:
 {-
