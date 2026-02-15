@@ -78,13 +78,6 @@ factor = try (parens lis intexp)
          <|> try (do reservedOp lis "-"
                      f <- factor
                      return (UMinus f))
-        --  <|> try (objExp) --Parseo el objeto completo
-        --  <|> try (do s <- stringLiteral lis  
-        --              return (Str s))  --Parseo el string literal ej "hola" al tipo Str "hola" utilizando stringLiteral de la libreria Parsec.Token
-        --  <|> try (do reserved lis "true" 
-        --              return (EBool True)) --Parseo valor boolean del Obj
-        --  <|> try (do reserved lis "false"
-        --              return (BoolConst False)) --Parseo valor boolean del Obj
          <|> (do n <- integer lis
                  return (Const n)
                 <|> do  str <- identifier lis
@@ -164,7 +157,6 @@ comm2 = try (do reserved lis "swap"
                     return (Repeat c cond))
         <|> try (do str <- identifier lis
                     reservedOp lis ":="
-                    -- e <- intexp
                     e <- generalExp
                     return (Let str e))
 
@@ -178,8 +170,8 @@ parseComm = parse (totParser comm)
 ------------------------------------
 -- test de parseo
 ------------------------------------
-parseIntExp :: String -> Either ParseError IntExp
-parseIntExp = parse (totParser intexp) ""
+-- parseIntExp :: String -> Either ParseError IntExp
+-- parseIntExp = parse (totParser intexp) ""
 
 -----------------------------------
 --- Parser de Objetos
@@ -193,25 +185,21 @@ sepBy parser separador -> parsea 0 o mas ocurrencias de *parser*, separadas por 
 -- Parser de un campo del objeto  
 -- retorna (String, IntExp) -> String == nombre del campo, IntExp == valor del campo
 -- (Ej. edad = 10) obtiene los datos edad, =, 10 y los parsea name <- edad, value<-10, retorna (edad,10)
--- objField :: Parser (String, IntExp)
 objField :: Parser (String, Exp)
 objField = do
                 name <- identifier lis
                 reservedOp lis ":"
                 value <- generalExp
-                -- value <- intexp
                 return (name, value)
 
 -- Parser para lista de campos
 -- Retorna una lista de par campo, valor; separadas por el caracter ","
 -- (Ej. [nombre="pepe",edad=15] -> [(nombre,"pepe"), (edad,15)])
 objFields :: Parser [(String,Exp)]
--- objFields :: Parser [(String,IntExp)]
 objFields = sepBy objField (reservedOp lis ",")
 
 -- Parser de objeto completo
 -- Extraigo {, luego obtengo la lista de campos, extraigo } y al final retorno la lista de campos del objeto
--- objExp :: Parser IntExp
 objExp :: Parser ObjExp
 objExp = do
             reservedOp lis "{"
@@ -231,37 +219,6 @@ fieldAccess = do
                 reservedOp lis "."
                 identifier lis
 
--- Access IntExp String 
--- Access recibe una expresion y el nombre de un campo
--- foldl :: (a -> b -> a) -> a -> [b] -> a
--- a = IntExp | b = String
--- Access :: IntExp -> String -> IntExp
-{-
-Ej:
-foldl Access (Var "persona") ["dir","calle"]
-
-→ Access (Var "persona") "dir"
-→ Access (Access (Var "persona") "dir") "calle"
--}
--- ------------------------
---con foldl
--- ---------------------
--- accessFactor :: Parser IntExp
--- accessFactor = do
---                 obj <- factor
---                 fields <- many fieldAccess
---                 return (foldl Access obj fields)
-
---sin foldl
--- many :: Parser a -> Parser [a]
--- many p aplica el parser p, cero o mas veces. Retorna una lista de los resultados del parser p
-
--- factor' :: Parser IntExp
--- factor' :: Parser IntExp
--- factor' = do
---         obj <- factor
---         fields <- many fieldAccess
---         return (buildAccess obj fields)
 
 objAccess :: Parser ObjExp
 objAccess = do 
@@ -271,11 +228,6 @@ objAccess = do
                             return (EInt (Var v))
                 fields <- many fieldAccess
                 return (buildAccess base fields)
-
---aux para factor sin foldl
--- Ej. persona.dir.calle
--- exp = Var "persona"
--- fields = ["dir", "calle"]
 
 --Ejecucion:
 {-
@@ -287,12 +239,10 @@ resultado
 -> Access (Access (Var "persona") "dir") "calle"
 
 -}
--- buildAccess :: IntExp -> [String] -> IntExp
 buildAccess :: Exp -> [String] -> ObjExp
 buildAccess exp [] = case exp of
                     EObj o -> o
                     _      -> error "Acceso invalido"
--- buildAccess exp [] = exp
 buildAccess exp (f:fs) = buildAccess' (Access exp f) fs
 
 buildAccess' :: ObjExp -> [String] -> ObjExp

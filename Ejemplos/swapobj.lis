@@ -1,0 +1,5 @@
+autoFiat := {marca: "Fiat", modelo: "Cronos"};
+autoChevrolet := {marca: "Chevrolet", modelo: "Prisma"};
+
+swap autoFiat autoChevrolet;
+skip

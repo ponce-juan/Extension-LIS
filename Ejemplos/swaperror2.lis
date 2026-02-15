@@ -1,9 +1,6 @@
-p := {nombre: "Juan", adulto: true};
-v1 := true;
-v2 := p.nombre;
+v1 := {nombre: "Juan"};
+v2 := "Pepe";
 
-v3 := "Pepe";
-
-swap p.nombre v3;
+swap v1 v2;
 
 skip

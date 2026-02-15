@@ -1,0 +1,227 @@
+EXTENSIÓN DEL LENGUAJE LIS
+
+Voy a extender el lenguaje LIS original con las siguientes caracteristicas:
+
+    * Incorporación de un nuevo tipo de dato: Objetos (Similar a los objetos de JavaScript)
+    * Acceso a campos mediante el operador "."
+    * Implementación del comando swap
+    * Validación de tipos en tiempo de ejecución
+
+El objetivo de estas modificaciones es incorporar mayor expresividad al lenguaje, agregando soporte para nuevos tipos de datos y comandos adicionales, manteniendo la coherencia con la semántica operacional original.
+
+-------------------------------------
+==== EXTENSIÓN DE TIPOS: OBJETOS ====
+-------------------------------------
+========== Sintaxis concreta ==========
+exp ::= ...
+        | '{' campos '}'
+        | exp '.' identificador
+
+campos ::=  identificador ':' exp
+            | identificador ':' exp ',' campos
+
+Ejemplos:
+persona := {nombre: "Juan", edad: 20}
+persona.edad
+
+========== Sintaxis abstracta ==========
+
+Exp ::= EInt IntExp
+        | EBool BoolExp
+        | EObj ObjExp
+
+ObjExp ::= Obj [(String, Exp)]
+            | Str String
+            | Access Exp String
+
+Descripción:
+Introduzco el tipo Objeto, similar al modelo de objetos en JavaScript.
+Un objeto está compuesto por una lista de pares (clave, valor), donde:
+    * clave es un identificador (String)
+    * valor es una expresión general (Exp)
+
+Esto permite que los campos de un objeto almacenen:
+    * Enteros
+    * Booleanos
+    * Strings
+    * Otros objetos
+
+Acceso a campos
+El operador "." permite acceder a los campos de un objeto.
+
+Ejemplo:
+    persona.edad
+
+En la sintaxis abstracta se representa como:
+
+    Access Exp String
+
+Semánticamente:
+
+    . Se evalúa la expresión base.
+
+    . Si el resultado es un objeto (VObj), se busca el campo solicitado.
+
+    . Si la expresión base no es un objeto, se produce un error en tiempo de ejecución.
+
+También se permite acceso encadenado:
+
+    persona.direccion.calle
+
+Internamente se representa como accesos anidados.
+
+========== SISTEMA DE TIPOS ==========
+
+Para que el lenguaje pueda soportar múltiples tipos defino el siguiente dominio de valores:
+
+    Value = VInt Integer
+            | VBool Bool
+            | VStr String
+            | VObj [(String, Value)]
+        
+El estado del programa queda definido como:
+
+    State = [(Variable, Value)]
+
+Esto permite que una variable pueda almacenar valores de distinto tipo, introduciendo un sistema con cierta similitud al de tipado dinámico.
+
+========== EXPRESIONES GENERALES ==========
+
+Se introduce un tipo abstracto general:
+
+    Exp =   EInt IntExp
+            | EBool BoolExp
+            | EObj ObjExp
+
+Esto reemplaza el modelo anterior en el cual las variables solo podían almacenar expresiones enteras.
+
+Ahora una asignación permite cualquier tipo de expresión general:
+
+    Let Variable Exp
+
+La evaluación se centraliza en la función:
+
+    evalExp :: Exp -> State -> Value
+
+----------------------------------
+========== COMANDO SWAP ==========
+----------------------------------
+========== Sintaxis concreta ==========
+
+    comm ::= ... | 'swap' identificador identificador
+
+Ejemplo:
+
+    swap a b
+
+========== Sintaxis abstracta ==========
+
+    Comm ::= ...
+            | Swap Variable Variable
+
+Descripción semántica:
+
+    El comando swap intercambia los valores de dos variables dentro del estado.
+
+Proceso de ejecución:
+
+    . Se obtiene el valor actual de ambas variables.
+
+    . Se valida que ambos valores sean del mismo tipo.
+
+    . Se genera un nuevo estado donde los valores se encuentran intercambiados.
+
+La validación de tipos se realiza comparando el constructor del valor:
+
+    VInt con VInt
+
+    VBool con VBool
+
+    VStr con VStr
+
+    VObj con VObj
+
+Si los tipos no coinciden, se produce un error en tiempo de ejecución.
+
+========== VALIDACIÓN DINÁMICA DE TIPOS ==========
+
+    . Las operaciones aritméticas verifican que ambos operandos sean enteros (VInt).
+     
+    . Las comparaciones verifican que los operandos sean del tipo correcto.
+     
+    . El acceso a campos verifica que la expresión base sea un objeto.
+     
+    . El comando swap verifica compatibilidad de tipos antes de realizar el intercambio.
+     
+    . La validación se realiza exclusivamente en el evaluador, manteniendo el parser independiente del control semántico.
+
+========== CAMBIOS EN EL PARSER ==========
+
+Se realizaron las siguientes modificaciones:
+
+    * Incorporación de generalExp para soportar múltiples tipos de expresión.
+
+    * Definición del parser objExp para objetos.
+
+    * Implementación de objAccess para acceso encadenado.
+
+    * Inclusión de la palabra reservada swap.
+
+    * Uso del operador ":" para asignación de campos dentro de objetos.
+
+Estas modificaciones mantienen la coherencia con la sintaxis original del lenguaje.
+
+========== EJEMPLOS DE USO ==========
+
+Ejemplo 1: Objeto
+
+    auto := {marca: "Ford", modelo: "Focus"};
+    marca := auto.marca;
+
+    Resultado final:
+    auto = {marca: "Ford", modelo: "Focus"}
+    marca = "Ford"
+
+Ejemplo 2: Swap válido
+
+    a := 10;
+    b := 20;
+    swap a b
+
+    Resultado final:
+    a = 20
+    b = 10
+
+Ejemplo 3: Swap inválido
+
+    a := 10;
+    b := {x: 1};
+    swap a b
+
+    Produce error por incompatibilidad de tipos.
+
+CONCLUSIÓN
+
+Las extensiones implementadas permiten ampliar significativamente la expresividad del lenguaje LIS.
+
+Se introdujo:
+
+Soporte para objetos estructurados
+
+Acceso a campos con sintaxis clara
+
+Sistema de expresiones generales
+
+Comando de intercambio seguro de valores
+
+Validación dinámica de tipos
+
+El diseño respeta la semántica operacional original, mantiene la inmutabilidad del estado y separa correctamente:
+
+Sintaxis
+
+Representación abstracta
+
+Evaluación semántica
+
+Estas modificaciones convierten al lenguaje LIS en un lenguaje más expresivo, manteniendo claridad estructural y coherencia formal.

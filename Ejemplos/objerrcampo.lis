@@ -1,0 +1,4 @@
+auto := {marca:"Chevrolet", modelo:"Cruze"};
+modelo := auto.modelo;
+motor := auto.motor;
+skip

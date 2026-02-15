@@ -1,0 +1,6 @@
+auto1 := {marca:"Ford", modelo:"Focus", motor:"nafta", seguridad:{cinturones:true,airbag:true,abs:false}};
+
+auto2 := {marca: auto.marca, motor: auto.motor};
+
+skip
+
