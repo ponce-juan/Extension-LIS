@@ -17,12 +17,6 @@ data IntExp = Const Integer
             | Minus IntExp IntExp
             | Times IntExp IntExp
             | Div IntExp IntExp
-            | Question BoolExp IntExp IntExp -- a > 0 ? 1 : 2;
-            -- Extensión para objetos
-            -- | Obj [(String, IntExp)] -- {edad: 20}
-            -- | Str String -- "Juan"
-            -- | Access IntExp String  -- para implementar persona.edad
-            -- | BoolConst Bool -- admito booleanos para el parser de intexp
  deriving (Show,Eq)
 
 -- Expresiones Booleanas
@@ -49,5 +43,5 @@ data Comm = Skip
           | Seq Comm Comm
           | Cond BoolExp Comm Comm
           | Repeat Comm BoolExp
-          | Swap Variable Variable -- Comando para intercambiar valores entre dos variables del estado
+          | Swap Variable Variable -- Comando para intercambiar valores entre dos variables
  deriving (Show,Eq)

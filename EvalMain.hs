@@ -39,7 +39,7 @@ sameType v1 v2 = case (v1, v2) of
                 (VObj _, VObj _) -> True
                 _ -> False
 
--- Cambiar el valor de una variable en un estado
+-- Cambiar el valor de una variable en el estado
 update :: Variable -> Value -> State -> State
 update var val [] = [(var, val)]
 update var val ((x,y):xs) = if var == x then (var,val):xs
@@ -80,7 +80,6 @@ evalComm (Swap a b) s = let va = lookfor a s
                             else error "Swap invalido: tipos de datos distintos"
 
 -- Declaramos un valor en el estado
--- evalComm (Let var exp) s = let val = evalIntExp exp s
 evalComm (Let var exp) s = let val = evalExp exp s
                            in evalComm Skip (update var val s)
 evalComm (Seq Skip c1) s = evalComm c1 s
@@ -93,11 +92,6 @@ evalComm (Cond b c0 c1) s = if (evalBoolExp b s )
                             else evalComm c1 s
 
 evalComm (Repeat c b) s = evalComm (Seq c (Cond b Skip (Repeat c b))) s
--- evalComm (Repeat c b) s = 
---                             let s' = evalComm c s
---                             in if evalBoolExp b s'
---                                 then s'
---                                 else evalComm (Repeat c b) s'
 
 -----------------------------------------
 -- Evalua una expresion entera
@@ -126,10 +120,6 @@ evalIntExp (Times exp1 exp2) estado = case (evalIntExp exp1 estado, evalIntExp e
 evalIntExp (Div exp1 exp2) estado = case (evalIntExp exp1 estado, evalIntExp exp2 estado) of
                                     (VInt n1, VInt n2) -> VInt (div n1 n2)
                                     _ -> error "Operacion division sobre valores no entero"
---Valor del operador ternario
-evalIntExp (Question b exp1 exp2) estado = if evalBoolExp b estado 
-                                            then evalIntExp exp1 estado
-                                            else evalIntExp exp2 estado
 
 -----------------------------------------
 -- Evalua una expresion booleana
@@ -142,16 +132,10 @@ evalBoolExp (Eq exp1 exp2) estado = case (evalIntExp exp1 estado, evalIntExp exp
                                         (VInt n1, VInt n2) -> n1 == n2
                                         _ -> error "Comparacion == solo se permite en enteros"
 
--- evalBoolExp (Lt exp1 exp2) estado = let valor1 = evalIntExp exp1 estado
---                                         valor2 = evalIntExp exp2 estado
---                                         in valor1 < valor2
 evalBoolExp (Lt exp1 exp2) estado = case (evalIntExp exp1 estado, evalIntExp exp2 estado) of
                                         (VInt n1, VInt n2) -> n1 < n2
                                         _ -> error "Comparacion < solo se permite entre enteros"
 
--- evalBoolExp (Gt exp1 exp2) estado = let valor1 = evalIntExp exp1 estado
---                                         valor2 = evalIntExp exp2 estado
---                                         in valor1 > valor2
 evalBoolExp (Gt exp1 exp2) estado = case (evalIntExp exp1 estado, evalIntExp exp2 estado) of
                                         (VInt n1, VInt n2) -> n1 > n2
                                         _ -> error "Comparacion > solo se permite entre enteros"

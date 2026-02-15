@@ -59,9 +59,7 @@ En la sintaxis abstracta se representa como:
 Semánticamente:
 
     . Se evalúa la expresión base.
-
     . Si el resultado es un objeto (VObj), se busca el campo solicitado.
-
     . Si la expresión base no es un objeto, se produce un error en tiempo de ejecución.
 
 También se permite acceso encadenado:
@@ -83,7 +81,7 @@ El estado del programa queda definido como:
 
     State = [(Variable, Value)]
 
-Esto permite que una variable pueda almacenar valores de distinto tipo, introduciendo un sistema con cierta similitud al de tipado dinámico.
+Esto permite que una variable pueda almacenar valores de distinto tipo, con cierta similitud al tipado dinámico.
 
 ========== EXPRESIONES GENERALES ==========
 
@@ -126,9 +124,7 @@ Descripción semántica:
 Proceso de ejecución:
 
     . Se obtiene el valor actual de ambas variables.
-
     . Se valida que ambos valores sean del mismo tipo.
-
     . Se genera un nuevo estado donde los valores se encuentran intercambiados.
 
 La validación de tipos se realiza comparando el constructor del valor:
@@ -145,14 +141,10 @@ Si los tipos no coinciden, se produce un error en tiempo de ejecución.
 
 ========== VALIDACIÓN DINÁMICA DE TIPOS ==========
 
-    . Las operaciones aritméticas verifican que ambos operandos sean enteros (VInt).
-     
+    . Las operaciones aritméticas verifican que ambos operandos sean enteros (VInt). 
     . Las comparaciones verifican que los operandos sean del tipo correcto.
-     
-    . El acceso a campos verifica que la expresión base sea un objeto.
-     
+    . El acceso a campos verifica que la expresión base sea un objeto.     
     . El comando swap verifica compatibilidad de tipos antes de realizar el intercambio.
-     
     . La validación se realiza exclusivamente en el evaluador, manteniendo el parser independiente del control semántico.
 
 ========== CAMBIOS EN EL PARSER ==========
@@ -160,13 +152,9 @@ Si los tipos no coinciden, se produce un error en tiempo de ejecución.
 Se realizaron las siguientes modificaciones:
 
     * Incorporación de generalExp para soportar múltiples tipos de expresión.
-
     * Definición del parser objExp para objetos.
-
     * Implementación de objAccess para acceso encadenado.
-
     * Inclusión de la palabra reservada swap.
-
     * Uso del operador ":" para asignación de campos dentro de objetos.
 
 Estas modificaciones mantienen la coherencia con la sintaxis original del lenguaje.
@@ -202,26 +190,18 @@ Ejemplo 3: Swap inválido
 
 CONCLUSIÓN
 
-Las extensiones implementadas permiten ampliar significativamente la expresividad del lenguaje LIS.
+Las extensiones implementadas permiten ampliar la expresividad del lenguaje LIS.
 
 Se introdujo:
 
-Soporte para objetos estructurados
-
-Acceso a campos con sintaxis clara
-
-Sistema de expresiones generales
-
-Comando de intercambio seguro de valores
-
-Validación dinámica de tipos
+    * Soporte para objetos estructurados
+    * Acceso a campos con sintaxis clara
+    * Sistema de expresiones generales
+    * Comando de intercambio seguro de valores
+    * Validación dinámica de tipos
 
 El diseño respeta la semántica operacional original, mantiene la inmutabilidad del estado y separa correctamente:
 
-Sintaxis
-
-Representación abstracta
-
-Evaluación semántica
-
-Estas modificaciones convierten al lenguaje LIS en un lenguaje más expresivo, manteniendo claridad estructural y coherencia formal.
+    * Sintaxis
+    * Representación abstracta
+    * Evaluación semántica

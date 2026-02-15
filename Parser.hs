@@ -41,7 +41,9 @@ lis = makeTokenParser (emptyDef   { commentStart  = "/*"
                                                        ]
                                    }
                                  )
+----------------------------------
 -- Parser para expresiones generales
+----------------------------------
 generalExp :: Parser Exp
 generalExp = try (do o <- objAccess
                      return (EObj o))
@@ -72,7 +74,6 @@ intexp  = chainl1 term addopp
 
 --Modifico term para implementar el azucar sintactica
 term = chainl1 factor multopp
---term = chainl1 factor multopp
 
 factor = try (parens lis intexp)
          <|> try (do reservedOp lis "-"
@@ -248,7 +249,4 @@ buildAccess exp (f:fs) = buildAccess' (Access exp f) fs
 buildAccess' :: ObjExp -> [String] -> ObjExp
 buildAccess' obj [] = obj
 buildAccess' obj (f:fs) = buildAccess' (Access (EObj obj) f) fs
-
-
-
 
